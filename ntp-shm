@@ -10,14 +10,16 @@
 #
 # on Fedora, this needs the packages perl-Inline, perl-DateTime, perl-Time-HiRes, and gcc
 #
-# example /etc/ntp.conf:
-# server 127.127.28.0 minpoll 4 maxpoll 4
+# example /etc/ntp.conf lines:
+# server 127.127.28.0 minpoll 6 maxpoll 6
 # fudge 127.127.28.0 time1 0.000 refid GPS stratum 0
 #
-# to run this program:
-# ./ntp-shm </dev/gps0
-# Adjust /dev/gps0 to match your device (see dmesg - can be "ttyUSB0").
-# This program needs to run as root (shm permissions and realtime priority)
+# to run this program, see ntp.sh
+# This program needs to run as root for shm permissions and realtime priority
+# 
+# ntp_message seems to be architecture-dependant, this is designed for a 64bit os
+#
+# see ntp-shm.log for lots of log messages
 
 use strict;
 use IPC::SysV qw(IPC_PRIVATE IPC_RMID S_IRUSR S_IWUSR);
@@ -25,7 +27,8 @@ use Inline "C";
 use DateTime;
 use Time::HiRes qw(tv_interval);
 use constant {
-  NTP_SHMID => 0x4e545030
+  NTP_SHMID => 0x4e545030,
+  LOGFILE_NAME => "ntp-shm.log"
 };
 use POSIX qw(:termios_h);
 require "asm-generic/termbits.ph";
@@ -36,7 +39,7 @@ our($locktype,%satinfo,%time,$lastsat,$last_remote_time,$last_local_time);
 our $shmid = shmget(NTP_SHMID, 96, S_IRUSR | S_IWUSR);
 die "shmget: $!" if ( $shmid < 0 );
 
-open(LOG,">>ntp-shm.log");
+open(LOG,">>", LOGFILE_NAME);
 
 set_serial_speed(fileno(STDIN));
 

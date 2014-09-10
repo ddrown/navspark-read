@@ -8,7 +8,7 @@
 # but without any warranty; without even the implied warranty of
 # merchantability or fitness for a particular purpose.
 #
-# on Fedora, this needs the packages perl-Inline, perl-DateTime, and gcc
+# on Fedora, this needs the packages perl-Inline, perl-DateTime, perl-Time-HiRes, and gcc
 #
 # example /etc/ntp.conf:
 # server 127.127.28.0 minpoll 4 maxpoll 4
@@ -87,12 +87,12 @@ sub watch_zzaac {
   my($start,$end,$found) = @_;
 
   if($reference_time and $last_remote_time and $last_local_time) {
-    if($start < $reference_time->{navspark_oxco_last}) {
+    if($start < $reference_time->{navspark_tcxo_last}) {
       $reference_time->{navspark_wraps}++;
     }
-    $reference_time->{navspark_oxco_last} = $start;
+    $reference_time->{navspark_tcxo_last} = $start;
     my $time_after_wrap = $start + $reference_time->{navspark_wraps} * 2**30/81.84;
-    my $duration_navspark = ($time_after_wrap - $reference_time->{navspark_oxco}) / 1000000;
+    my $duration_navspark = ($time_after_wrap - $reference_time->{navspark_tcxo}) / 1000000;
     my $duration_gps = $last_remote_time->hires_epoch() - $reference_time->{gps};
     my $duration_pc = tv_interval($reference_time->{pc}, $last_local_time);
 
@@ -104,8 +104,8 @@ sub watch_zzaac {
     $last_remote_time = $last_local_time = undef;
   } elsif(defined($last_remote_time) and defined($last_local_time)) {
     $reference_time = {
-      navspark_oxco => $start,
-      navspark_oxco_last => $start,
+      navspark_tcxo => $start,
+      navspark_tcxo_last => $start,
       navspark_wraps => 0,
       gps => $last_remote_time->hires_epoch(),
       pc => $last_local_time
